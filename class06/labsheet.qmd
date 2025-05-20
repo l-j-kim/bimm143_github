@@ -1,0 +1,28 @@
+---
+title: "class006_labsheet"
+format: html
+---
+
+## Labsheet Questions
+>Q1
+
+```{r}
+grade <- function(scores) {
+  #removes first row with student name
+  mod_scores <- as.numeric(scores[-1])
+  #sets all NA values to 0, will be counted as lowest score
+  mod_scores[is.na(mod_scores)] <- 0
+  
+  #remove the lowest score and averages the rest
+  mod_scores <- mod_scores[!mod_scores %in% min(mod_scores)] 
+  mean(mod_scores)
+}
+```
+
+>Q2
+
+```{r}
+scores <- read.csv("student_homework.csv")
+grades <- apply(scores, 1, grade)
+scores[which.max(grades),1]
+```

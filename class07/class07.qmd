@@ -1,0 +1,194 @@
+---
+title: "Class 7: Machine Learning"
+author: "Leah Kim A16973745"
+format: pdf
+toc: true
+---
+
+Today we will explore unsupervised machine learning methods starting with clustering and dimensionality reduction.
+
+## Clustering
+
+To start let's make up some data to cluster where we know what the answer should be.
+
+```{r}
+hist(rnorm(10000, mean = 3))
+```
+
+Return a vector with 30 numbers centered on -3 and 30 centered on +3. 
+```{r}
+tmp <- c(rnorm(30, mean = -3), rnorm(30, mean = 3))
+x <- cbind(x = tmp, y = rev(tmp))
+```
+
+Make a plot of `x`.
+```{r}
+plot(x)
+```
+## K-means
+
+The main function in "base" R for K-means clustering is called `kmeans()`.
+```{r}
+km <- kmeans(x, centers = 2)
+km
+```
+The `kmeans()` function returns a "list" with 9 components. You can see the named components of any list with the `attributes()` function.
+```{r}
+attributes(km)
+```
+
+> Q. How many points are in each cluster.
+
+```{r}
+km$size
+```
+
+> Q. Cluster assignment/membership vector?
+
+```{r}
+km$cluster
+```
+
+> Q. Cluster centers
+
+```{r}
+km$centers
+```
+
+
+> Q. Make a plot of our `kmeans()` results showing cluster assignment using different colors for each cluster/group of points and cluster centers
+
+```{r}
+plot(x, col = km$cluster)
+points(km$centers, col = "blue", pch=15, cex=1.5)
+```
+> Q. Run `kmeans()` again on `x` adn this cluster into four groups/clusters and plot the same result figure as above. 
+
+```{r}
+km2 <- kmeans(x, centers = 4)
+plot(x, col = km2$cluster)
+points(km2$centers, col = "blue", pch=15, cex=1.5)
+```
+
+> **Key point**: K0means clustering is super populr but can be misused. One big limitation is that it can impose a clustering pattern on your data even if clear natural grouping doesn't exist - i.e. it does what you tell it to do in terms of `centers`.
+
+### Hierarchical Clustering
+
+The main function in "base" R for hierarchical clsutering is called `hclust()`.
+
+You cannot just pas our dataset as is into `hclust()`. You must give a "distance matrix" as an input. We can ge tthis from the `dist()` function.
+
+```{r}
+d <- dist(x)
+hc <- hclust(d, method = "complete")
+```
+
+Hclust cannot use  have a special `plot()` method
+
+```{r}
+plot(hc)
+abline(h=8, col="red")
+```
+
+To get our main cluster assignment (membership vector), we need to cut the tree at the goal posts with `cutree()`.
+
+```{r}
+grps <- cutree(hc, h=8)
+grps
+```
+
+```{r}
+table(grps)
+```
+
+```{r}
+plot(x, col = grps)
+```
+
+Hierchical clustering is distinct in that the dendrogram (tree figure) can reveal the potential grouping in your data (unlke K-means).
+
+## Principal Component Analysis (PCA)
+
+PCA is a common and highly useful dimensionality reduction technique used in many field - particularly bioinformatics.
+
+Here we will analyze some data from the UK on food consumption.
+
+### Data import
+```{r}
+url <- "https://tinyurl.com/UK-foods"
+x <- read.csv(url)
+
+head(x)
+```
+
+```{r}
+#will gradually remove columns when run over and over again until there are no columns in the table
+rownames(x) <- x[,1]
+x <- x[,-1]
+head(x)
+```
+
+```{r}
+#fixes the above issue by reading the input differently
+x <- read.csv(url, row.names = 1)
+head(x)
+```
+
+```{r}
+barplot(as.matrix(x), beside=T, col=rainbow(nrow(x)))
+```
+
+```{r}
+barplot(as.matrix(x), beside=F, col=rainbow(nrow(x)))
+```
+
+One conventional plot that can be useful is called a "pairs" plot.
+
+```{r}
+pairs(x, col=rainbow(nrow(x)), pch=16)
+```
+
+### PCA to the Rescue
+
+The main function in bse R for PCA is called `prcomp()`.
+```{r}
+#transpose of x, x and y axis flipped
+t(x)
+```
+
+```{r}
+pca <- prcomp(t(x))
+summary(pca)
+```
+
+The `prcomp()` funciton returns a list object of our results.
+
+```{r}
+attributes(pca)
+```
+
+The two main "results" from here are `pca$x` and `pca%rotation`. The first of these (`pca$x`) contains the scores of the data on the new PC axis - we use these to make our PCA plot.
+```{r}
+pca$x
+```
+
+```{r}
+library(ggplot2)
+library(ggrepel)
+# Make a plot of pca$x with PC1 vs PC2
+
+ggplot(pca$x) + 
+  aes(PC1, PC2, label = rownames(pca$x)) +
+  geom_point() +
+  geom_text_repel()
+```
+This figure shows the PC values of each nation in the PC1 and PC2 axes The distance between the points on this axis represents how similar they are to each other. For this data, on the PC1 axis, all the nations in Great Britain are grouped together and North Ireland is separate, indicating North Ireland is noticeably different.
+
+The second major result is contained within the `pca$rotation` object or component. Let's plot thsi to see what PCa is picking up...
+
+```{r}
+ggplot(pca$rotation) + 
+  aes(PC1, rownames(pca$rotation)) + 
+  geom_col()
+```
+This figure shows how strongly the variables / dimensions contributed the most to the calculation of PCA1 and in what way, with longer columns signifying a higher contribution. For this data, the further to the right the column leads, the more that specific food is consumed in North Ireland compared to the other nations, and the further left the column leads, the more that specific food is consumed in Great Britain.

@@ -1,5 +1,5 @@
 ---
-title: "class17"
+title: "Class 17: Analyzing sequencing data in the cloud"
 author: "Leah Kim A16973745"
 format: pdf
 toc: true

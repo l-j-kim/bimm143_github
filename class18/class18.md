@@ -1,4 +1,4 @@
-# Class18
+# Class18: Investigating pertussis Resurgence Mini-Project
 Leah Kim A16973745
 
 - [Background](#background)

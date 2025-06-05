@@ -1,4 +1,4 @@
-# class17
+# Class 17: Analyzing sequencing data in the cloud
 Leah Kim A16973745
 
 - [Setup](#setup)

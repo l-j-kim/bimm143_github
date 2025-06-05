@@ -1,0 +1,46 @@
+---
+title: "Class 12"
+author: Leah Kim A16973745
+format: pdf
+toc: true
+---
+
+# Class 12 Homework 
+
+## Q13: Read this file into R and determine the sample size for each genotype and their corresponding median expression levels for each of these genotypes. Hint: The read.table(), summary() and boxplot() functions will likely be useful here. There is an example R script online to be used ONLY if you are struggling in vein. Note that you can find the medium value from saving the output of the boxplot() function to an R object and examining this object. There is also the medium() and summary() function that you can use to check your understanding. 
+
+Reading the dataset
+```{r}
+data <- read.table("rs8067378_ENSG00000172057.6.txt", header = TRUE, sep = "", stringsAsFactors = TRUE)
+names(data)
+```
+
+Sample Size for each genotype: 
+```{r}
+table(data$geno)
+```
+
+## Q14: Generate a boxplot with a box per genotype, what could you infer from the relative expression value between A/A and G/G displayed in this plot? Does the SNP effect the expression of ORMDL3? Hint: An example boxplot is provided overleaf – yours does not need to be as polished as this one.
+
+Boxplot for each genotype:
+```{r}
+bp <- boxplot(exp ~ geno, data = data, 
+              main = "Expression by Genotype",  
+              xlab = "Genotype", 
+              ylab = "Expression")
+bp$stats[3, ]
+```
+
+Median expression of each genotype: 
+```{r}
+bp$stats[3, ]
+```
+
+As shown by the boxplot, the A/A genotype has the highet median expression of around 30, the A/G has the middle expression of around 25, and G/G has the lowest median expression of around 20. Though there is a bit of overlap, there is a consistent decline in expression the more G alleles the genotype has.
+
+This suggests that the SNPS does affect the expression of ORMDL_3 with the presense of the G allele reducing expression. Individuals with G/G genotype consistently show lower expression, while those with A/A show the highest. 
+
+Summary of data:
+```{r}
+summary(data)
+```

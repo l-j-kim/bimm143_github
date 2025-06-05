@@ -1,0 +1,175 @@
+---
+title: "Class 11: Protein Structure Prediction"
+author: "Leah Kim A16973745"
+format: pdf
+toc: true
+---
+
+## pLDDT Score from Alignment File 
+
+Here we read the results from AlphaFold and try to interpret all the models and quality score metrics.
+
+```{r}
+library(bio3d)
+
+pth <- "hivprdimer_23119/"
+pdb.files <- list.files(path = pth, full.names = TRUE, pattern = ".pdb")
+```
+
+Align and superpose all these models
+```{r}
+file.exists(pdb.files)
+```
+
+```{r}
+pdbs <- pdbaln(pdb.files, fit = TRUE, exefile="msa")
+```
+
+```{r}
+library(bio3dview)
+#view.pdbs(pdbs)
+```
+
+```{r}
+#model 5 is significantly lower than the otehr models, lower score
+plot(pdbs$b[1,], typ="l", ylim = c(0,100), ylab = "PLDDT Score")
+lines(pdbs$b[2,], typ="l", col="blue")
+lines(pdbs$b[3,], typ="l", col="green")
+lines(pdbs$b[4,], typ="l", col="orange")
+lines(pdbs$b[5,], typ="l", col="red")
+```
+
+## Custom Analysis of Resulting Models
+```{r}
+rd <- rmsd(pdbs, fit=T)
+range(rd)
+```
+
+```{r}
+library(pheatmap)
+
+colnames(rd) <- paste0("m",1:5)
+rownames(rd) <- paste0("m",1:5)
+pheatmap(rd)
+```
+
+```{r}
+# Read a reference PDB structure
+pdb <- read.pdb("1hsg")
+```
+
+```{r}
+# Read a reference PDB structure
+plotb3(pdbs$b[1,], typ="l", lwd=2, sse=pdb)
+points(pdbs$b[2,], typ="l", col="red")
+points(pdbs$b[3,], typ="l", col="blue")
+points(pdbs$b[4,], typ="l", col="darkgreen")
+points(pdbs$b[5,], typ="l", col="orange")
+abline(v=100, col="gray")
+```
+
+```{r}
+core <- core.find(pdbs)
+core.inds <- print(core, vol=0.5)
+xyz <- pdbfit(pdbs, core.inds, outpath="corefit_structures")
+```
+
+```{r}
+rf <- rmsf(xyz)
+
+plotb3(rf, sse=pdb)
+abline(v=100, col="gray", ylab="RMSF")
+```
+
+## Predicted Alignment Error
+```{r}
+library(jsonlite)
+
+# Listing of all PAE JSON files
+pae_files <- list.files(path=pth,
+                        pattern=".*model.*\\.json",
+                        full.names = TRUE)
+```
+
+```{r}
+pae1 <- read_json(pae_files[1],simplifyVector = TRUE)
+pae5 <- read_json(pae_files[5],simplifyVector = TRUE)
+
+attributes(pae1)
+```
+
+```{r}
+# Per-residue pLDDT scores 
+#  same as B-factor of PDB..
+head(pae1$plddt) 
+```
+
+```{r}
+pae1$max_pae
+```
+
+```{r}
+pae5$max_pae
+```
+
+```{r}
+plot.dmat(pae1$pae, 
+          xlab="Residue Position (i)",
+          ylab="Residue Position (j)")
+```
+
+```{r}
+plot.dmat(pae5$pae, 
+          xlab="Residue Position (i)",
+          ylab="Residue Position (j)",
+          grid.col = "black",
+          zlim=c(0,30))
+```
+
+```{r}
+#plot.dmat(pae1$pae, 
+          #xlab="Residue Position (i)",
+          #ylab="Residue Position (j)",
+          #grid.col = "black",
+          #zlim=c(0,30)
+```
+
+## Score residue Conservation from Alignment file
+
+AlphaFold returns it's large alignment file used for analusis. Here we read this file and score conservation per position.
+
+```{r}
+aln_file <- list.files(path=pth, pattern=".a3m$", full.names = TRUE)
+aln_file
+```
+```{r}
+aln <- read.fasta(aln_file[1], to.upper = TRUE)
+```
+
+How many sequences are in this alignment
+
+```{r}
+dim(aln$ali)
+```
+
+We can score residue conservation in the alignment with the conserv() function.
+
+```{r}
+sim <- conserv(aln)
+
+plotb3(sim[1:99], sse=trim.pdb(pdb, chain="A"),
+       ylab="Conservation Score")
+```
+
+```{r}
+con <- consensus(aln, cutoff = 0.9)
+con$seq
+```
+
+Export file for viewing in Mol
+```{r}
+m1.pdb <- read.pdb(pdb.files[1])
+occ <- vec2resno(c(sim[1:99], sim[1:99]), m1.pdb$atom$resno)
+write.pdb(m1.pdb, o=occ, file="m1_conserv.pdb")
+```
+

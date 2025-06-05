@@ -1,0 +1,11 @@
+---
+title: "Class 19: Cancer Mutation Analysis"
+author: "Leah Kim A16973745"
+format: html
+---
+
+```{r}
+library(bio3d)
+pt <- read.fasta("A16973745_mutant_seq.fa")
+```
+
